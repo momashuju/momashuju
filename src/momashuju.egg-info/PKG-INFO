@@ -1,3 +1,17 @@
+Metadata-Version: 2.4
+Name: momashuju
+Version: 0.1.0
+Summary: AI 自动小说写作系统 — spec + runtime + verify 架构
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: anthropic>=0.40.0
+Requires-Dist: pydantic>=2.10.0
+Requires-Dist: pyyaml>=6.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: ruff>=0.8.0; extra == "dev"
+
 # momashuju — AI 自动小说写作系统
 
 本项目用于 AI 自动编写小说。采用 **spec + runtime + verify** 架构，搭建 AI 自动编写小说的工程化流程。
@@ -165,43 +179,43 @@ SPEC (规约层)  ──→  RUNTIME (执行层)  ──→  VERIFY (验证层)
 
 ### 基础设施建设
 
-- [x] 确定项目技术栈 → **Python**
-- [x] 设计目录结构 → `src/momashuju/{spec,runtime,verify,llm}/`
-- [x] 选择 LLM 供应商 → **Claude** (anthropic SDK)，预留 DeepSeek/OpenAI 扩展
-- [x] 搭建项目脚手架 → `pyproject.toml` + 可编辑安装
+- [ ] 确定项目技术栈（Python / Node.js / Go）
+- [ ] 设计目录结构
+- [ ] 选择 LLM 供应商（Claude / DeepSeek / OpenAI）
+- [ ] 搭建项目脚手架
 
 ### Spec 层
 
-- [x] 世界观设定模板与数据模型设计 → `spec/models.py` WorldSetting
-- [x] 角色档案模板（姓名/年龄/性格/欲望/恐惧/能力/关系网/知识边界）→ `spec/models.py` Character + Relationship
-- [x] 章节大纲格式规范（路标事件/本章目标/冲突设置/伏笔埋设/钩子）→ `spec/models.py` ChapterOutline
-- [x] 写作风格约束定义（视角/时态/语言风格/禁用词表）→ `spec/models.py` StyleConstraints
-- [x] 伏笔追踪数据结构 → `spec/models.py` Foreshadowing + ForeshadowingTracker
+- [ ] 世界观设定模板与数据模型设计
+- [ ] 角色档案模板（姓名/年龄/性格/欲望/恐惧/能力/关系网/知识边界）
+- [ ] 章节大纲格式规范（路标事件/本章目标/冲突设置/伏笔埋设/钩子）
+- [ ] 写作风格约束定义（视角/时态/语言风格/禁用词表）
+- [ ] 伏笔追踪数据结构
 
 ### Runtime 层
 
 - [ ] ArchitectAgent：大纲 → 可执行章节规划
 - [ ] WriterAgent：逐章写作（含上下文组装逻辑）
-- [x] 上下文管理模块：动态压缩 + 状态摘要生成 → `runtime/context.py` ContextManager
+- [ ] 上下文管理模块：动态压缩 + 状态摘要生成
 - [ ] ReviserAgent：根据审计反馈修订
 - [ ] 状态持久化模块：每章 checkpoint 的读写
 - [ ] 断点续写机制
 
 ### Verify 层
 
-- [x] ValidatorAgent：确定性规则集实现 → `verify/rules.py` 11条规则全部实现
-  - [x] 格式检查（段落长度 → ParagraphLengthRule）
-  - [x] 禁词/禁用句式检测 → BannedPatternRule + CustomBannedRule
-  - [x] 过渡词密度统计 → TransitionDensityRule
-  - [x] 疲劳词频率控制 → FatigueWordRule
-  - [x] 连续句式检测 → ConsecutiveLeRule + NoEmDashRule + NoMetaNarrationRule + NoReportTermsRule + NoAuthorPreachingRule + NoCollectiveReactionRule
+- [ ] ValidatorAgent：确定性规则集实现
+  - [ ] 格式检查（段落长度、字数等）
+  - [ ] 禁词/禁用句式检测
+  - [ ] 过渡词密度统计
+  - [ ] 疲劳词频率控制
+  - [ ] 连续句式检测
 - [ ] AuditorAgent：LLM 质量审计
   - [ ] 情节逻辑一致性
   - [ ] 人物行为/对话一致性
   - [ ] 节奏评估（爽点分布）
   - [ ] 伏笔回收检测
   - [ ] 大纲偏离度计算
-- [ ] 评分体系：多维度评分标准定义（权重已配置在 defaults.yaml）
+- [ ] 评分体系：多维度评分标准定义
 - [ ] 门禁机制：不通过则阻断进入下一章
 
 ### 进阶功能

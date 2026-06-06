@@ -1,0 +1,29 @@
+# ═══════════════════════════════════════════════
+# 小说项目配置 — demo：青梅与龙族少女的一周
+# ═══════════════════════════════════════════════
+
+title: "青梅与龙族少女的一周"
+author: "moma"
+summary: "战争结束后，巫劫带回了一个龙族少女琪莎拉。然而琪莎拉完全没有男女观念，在同居生活中闹出一系列尴尬事件，恰好被青梅竹马爱丽丝撞见。"
+genre: "西幻/异世界/后宫/日常"
+
+style:
+  pov: third_limited
+  tense: past
+  language_style: light_novel
+  banned_words:
+    - "震撼"
+    - "惊骇"
+  banned_patterns:
+    - "不是……而是……"
+  required_elements:
+    - "每章至少一处琪莎拉的呆萌行为"
+    - "每章至少一处巫劫的内心吐槽"
+  notes: "轻小说风格，偏轻松日常。对话自然流畅，内心独白可适当使用。视角以巫劫为主。"
+  paragraph_max_chars: 300
+
+rules:
+  custom_banned:
+    words:
+      - "毁天灭地"
+      - "恐怖如斯"
