@@ -180,12 +180,13 @@ SPEC (规约层)  ──→  RUNTIME (执行层)  ──→  VERIFY (验证层)
 
 ### Runtime 层
 
-- [ ] ArchitectAgent：大纲 → 可执行章节规划
-- [ ] WriterAgent：逐章写作（含上下文组装逻辑）
+- [x] ArchitectAgent：大纲 → 可执行章节规划 → `runtime/agents/architect.py`
+- [x] WriterAgent：逐章写作（含上下文组装逻辑）→ `runtime/agents/writer.py` (structured output)
 - [x] 上下文管理模块：动态压缩 + 状态摘要生成 → `runtime/context.py` ContextManager
-- [ ] ReviserAgent：根据审计反馈修订
-- [ ] 状态持久化模块：每章 checkpoint 的读写
-- [ ] 断点续写机制
+- [x] ReviserAgent：根据审计反馈修订 → `runtime/agents/reviser.py` (零成本跳过)
+- [x] 状态持久化模块：每章 checkpoint 的读写 → `runtime/state.py` StateManager
+- [x] 断点续写机制 → `runtime/state.py` StateManager.restore_context + Pipeline.start_chapter
+- [x] Pipeline 编排器 → `runtime/pipeline.py` (Architect → Writer → Verify → Revise → Persist)
 
 ### Verify 层
 
@@ -195,14 +196,15 @@ SPEC (规约层)  ──→  RUNTIME (执行层)  ──→  VERIFY (验证层)
   - [x] 过渡词密度统计 → TransitionDensityRule
   - [x] 疲劳词频率控制 → FatigueWordRule
   - [x] 连续句式检测 → ConsecutiveLeRule + NoEmDashRule + NoMetaNarrationRule + NoReportTermsRule + NoAuthorPreachingRule + NoCollectiveReactionRule
-- [ ] AuditorAgent：LLM 质量审计
-  - [ ] 情节逻辑一致性
-  - [ ] 人物行为/对话一致性
-  - [ ] 节奏评估（爽点分布）
-  - [ ] 伏笔回收检测
-  - [ ] 大纲偏离度计算
-- [ ] 评分体系：多维度评分标准定义（权重已配置在 defaults.yaml）
-- [ ] 门禁机制：不通过则阻断进入下一章
+- [x] AuditorAgent：LLM 质量审计 → `verify/auditor.py` 6维度 structured output
+  - [x] 情节逻辑一致性
+  - [x] 人物行为/对话一致性
+  - [x] 节奏评估（爽点分布）
+  - [x] 伏笔回收检测
+  - [x] 大纲偏离度计算
+  - [x] 可读性评估
+- [x] 评分体系：多维度评分标准定义 → `verify/scoring.py` ScoreCalculator
+- [x] 门禁机制：不通过则阻断进入下一章 → Pipeline 已集成 ScoreCalculator + 修订循环
 
 ### 进阶功能
 
