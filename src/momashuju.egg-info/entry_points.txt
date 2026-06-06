@@ -1,2 +1,0 @@
-[console_scripts]
-momashuju = momashuju.cli:main
