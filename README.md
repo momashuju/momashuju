@@ -1,232 +1,77 @@
-# momashuju — AI 自动小说写作系统
+# momashuju — AI 小说写作系统（Multica 原生版）
 
-本项目用于 AI 自动编写小说。采用 **spec + runtime + verify** 架构，搭建 AI 自动编写小说的工程化流程。
-
-用户提供大纲（spec），由 AI 负责逐章实现（runtime），并通过多层验证确保质量（verify）。
+本仓库是 **momashuju** AI 小说写作系统的产物存储库，由 Multica 平台上的多 Agent 协作生成和管理。
 
 ---
 
-## 参考资源
+## 仓库结构
 
-### 小说创作理论
-
-| 书名 | 作者 | 出版时间 | 简介 |
-|------|------|----------|------|
-| 《小说写作教程》 | 方长安(总主编)、张生 | 2025.07 | 十二讲完整覆盖：人物/故事/情意/素材/背景/视角/情节/语言/开头结尾 |
-| 《小说写作入门》 | 伊北 | 2026.01 | 67个核心主题，分上中下三篇，适合零基础系统入门 |
-| 《小说创作万花筒》 | 尼古拉斯·罗伊尔 | 2025.03 | 18位职业小说家分享创作技巧，覆盖多种类型写作 |
-| 《创意写作》 | 薛梅 | 2025.06 | 七章本土化教学，含符号学理论整合 |
-| 《网络文学创作理论与实践》 | 张永禄 | 2025–2026 | 网文专项：世界观/人设/爽感/升级流/叙事模式/网文出海 |
-
-### AI 小说生成 — 学术论文
-
-| 系统 | 来源 | 核心思路 |
-|------|------|----------|
-| **StoryWriter** | arXiv 2025.06 | Outline → Planning → Writing 三 Agent 流水线，动态历史压缩保持长文一致性 |
-| **StoryBox** | AAAI 2026 | 角色 Agent 自主交互 + 叙事者 Agent，自下而上涌现式生成 |
-| **Agents' Room** | ICLR 2025 | Orchestrator 协调多专业 Agent，基于叙事理论分解子任务 |
-| **DOME** | NAACL 2025 | 动态层级大纲 + 时间知识图谱，大纲随写作动态调整，时序冲突检测 |
-| **ComoRAG** | AAAI 2026 | 迭代推理 + 全局记忆池，200K+ token 长文推理提升 11% |
-| **SCORE** | 2025.05 | 动态状态追踪 + 层次摘要 + 混合检索，一致性提升 23.6%，幻觉减少 41.8% |
-
-### AI 小说生成 — 开源工程
-
-| 项目 | 技术栈 | 特点 |
-|------|--------|------|
-| **NovelScribe** | Python CLI | 9 Agent 协作（讨论→题材→角色→世界观→大纲→章节规划→写作→连续性→编辑），质量分级 |
-| **AI Writer** | Go + Vue | 世界书系统 + 角色图鉴 + MOD 文风控制 + 伏笔追踪 + 插画生成 |
-| **NovelWriter** | Python + Docker | 动态实体关系网，自动精准提取所需设定，防设定崩塌 |
-| **WenShape(文枢)** | Python + Node.js | BM25 检索 + 实体增强 + 距离衰减降低幻觉，支持同人创作 |
-| **MoKe(墨客)** | Node.js (InkOS) | 5 Agent 专为中文网文优化，含 11 条确定性规则 + 33 个 LLM 评估维度 |
-| **MuseFlow** | Node.js CLI | 8 Agent 含幻觉检测和逻辑一致性检查，LangGraph 状态图编排 |
-
----
-
-## 参考架构设计
-
-### InkOS 架构（重点参考）
-
-```text
-ArchitectAgent   → outline.md + book_rules.md  (设定 + 规则)
-    │
-WriterAgent      → ch00N.md                    (逐章写作)
-    │
-ValidatorAgent   → 11条确定性规则              (零LLM成本)
-    │
-AuditorAgent     → 33个LLM评估维度             (质量审计)
-    │
-ReviserAgent     → spot-fix / rewrite / polish
-    │
-    └──→ 循环至下一章
+```
+momashuju/
+└── novels/
+    └── <novel-name>/
+        ├── spec.json          # 结构化设定（人物、世界观、大纲）
+        ├── state.json         # 写作进度（已完成章节、当前状态）
+        └── chapters/
+            ├── chapter_01.md
+            ├── chapter_02.md
+            └── ...
 ```
 
-#### 11 条确定性验证规则（参考）
+---
 
-1. 禁止句式检测（如 `不是……而是……`）
-2. 破折号禁用（`——`）
-3. 过渡词密度（`仿佛/忽然/竟然` ≤ 1次/3000字）
-4. 高疲劳词控制（`震撼/惊骇/恐惧/颤抖` ≤ 1次/章）
-5. 元叙事检测（编剧式旁白）
-6. 报告术语检测
-7. 作者说教检测（`显然/不言而喻`）
-8. 集体反应检测（"全场震惊"类）
-9. 连续"了"检测（≥4 句连续以"了"结尾）
-10. 段落长度控制（≥2 段超 300 字则告警）
-11. 书籍专属禁止列表
+## 系统架构
 
-#### 33 个 LLM 评估维度（参考）
+本系统完全运行在 Multica 平台上，由以下角色协作完成小说创作：
 
-- **1–23**：叙事质量（情节/角色/节奏/伏笔回收等）
-- **24–26**：子情节停滞 / 角色弧扁平 / 节奏单调检测
-- **27**：敏感内容检测
-- **28–31**：番外正典冲突 / 未来信息泄露 / 世界规则一致性 / 伏笔隔离
-- **32**：读者期望管理
-- **33**：大纲偏离检测
+| 角色 | 类型 | 职责 |
+|---|---|---|
+| PM Agent | Agent | 协调整体流程、拆解任务、汇总结果 |
+| Writer Agent | Agent | 根据 spec 生成章节正文 |
+| Novel QA Agent | Agent | 对章节执行质量校验，输出通过/驳回+理由 |
+| novel-spec | Skill | 将用户需求结构化为 spec.json 并提交到本仓库 |
+| chapter-archive | Skill | 将通过 QA 的章节提交到本仓库，更新 state.json |
 
-### Book Genesis v4 架构（参考）
+---
 
-```text
-Phase 0: Intake        → 需求分析、市场地图
-Phase 1: Foundation    → 角色、主题、情感曲线
-Phase 2: Architecture  → 大纲、张力地图（对抗性大纲评审）
-Phase 3: Drafting      → 逐章写作（流式写入，每章 checkpoint）
-Phase 4: Adversarial   → 独立批评 Agent 审计，不通过则阻断
-Phase 5: Final Score   → 10 维度 Genesis 评分（原创性/主题/角色/文笔/节奏/情感/连贯性/市场/声音/开篇）
-Phase 6: Editorial     → 梗概、推荐语、投稿策略
+## 端到端工作流
+
+```
+用户描述小说需求（Multica Issue 评论）
+  ↓
+PM Agent → novel-spec Skill → 生成 spec.json 提交仓库
+  ↓
+PM Agent 创建「写第 N 章」子任务 → Writer Agent 生成章节草稿
+  ↓
+PM Agent 创建「QA 第 N 章」子任务 → QA Agent 校验
+  ├─ 通过 → chapter-archive Skill 提交到 GitHub → PM 通知用户
+  └─ 驳回 → PM 创建「修改第 N 章」子任务 → Writer 修改 → 重新 QA
+  ↓
+用户确认后，继续下一章
 ```
 
-核心创新：**MiroFish 读者模拟层** — 多种读者人设并行阅读，模拟市场反馈。
+---
+
+## QA 验证规则
+
+QA Agent 基于提示词驱动，分两层校验：
+
+**第一层：结构性检查（客观）**
+1. 字数是否在目标范围内
+2. 章节是否有完整的开头、发展、结尾
+3. 出场人物名称是否与 spec.json 一致
+
+**第二层：叙事质量审计（LLM 评分）**
+4. 情节连贯性：与前序章节是否矛盾
+5. 人物一致性：角色行为/语言风格是否符合人设
+6. 节奏感：场景推进是否自然，无冗余/跳跃
+7. 内容新鲜度：是否重复已写内容
+8. 目标推进度：本章是否有效推进了大纲中的情节目标
+
+每条输出「通过 / 驳回 + 具体原因」。
 
 ---
 
-## 本项目架构设计
+## 如何开始
 
-### 核心理念
-
-```text
-SPEC (规约层)  ──→  RUNTIME (执行层)  ──→  VERIFY (验证层)
-     │                    │                       │
-  用户大纲            AI 逐章写作             多层质量审计
-  角色设定            Agent 流水线            确定性规则+LLM评估
-  风格约束            状态持久化              对抗性独立评审
-```
-
-### Agent 流水线设计（规划）
-
-```text
-用户输入(spec)
-    │
-    ▼
-┌─────────────────────────────────────────────────────┐
-│  Spec 层                                             │
-│  ├─ 世界观设定  ├─ 角色档案  ├─ 章节大纲            │
-│  ├─ 风格约束    ├─ 伏笔清单  ├─ 禁止规则            │
-└─────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────┐
-│  Runtime 层                                          │
-│                                                      │
-│  ArchitectAgent  → 大纲展开为可执行章节规划          │
-│        │                                             │
-│  WriterAgent     → 逐章写作（上下文：角色状态摘要    │
-│                    + 前3章摘要 + 伏笔清单 + 本章目标）│
-│        │                                             │
-│  ReviserAgent    → 根据审计反馈修订                  │
-│        │                                             │
-│        └──→ 循环至下一章                             │
-└─────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────┐
-│  Verify 层                                           │
-│                                                      │
-│  ValidatorAgent  → 确定性规则（零LLM成本）           │
-│        ├─ 格式检查    ├─ 禁词检测    ├─ 密度控制    │
-│                                                      │
-│  AuditorAgent    → LLM 质量审计                      │
-│        ├─ 情节一致性  ├─ 人物一致性  ├─ 节奏评估    │
-│        ├─ 爽点密度    ├─ 伏笔回收    ├─ 大纲偏离度  │
-└─────────────────────────────────────────────────────┘
-```
-
-### 关键设计要点
-
-1. **上下文管理**：不携带全文上下文，采用"动态压缩"——仅携带角色状态 + 前 3 章摘要 + 伏笔清单 + 当前章目标
-2. **确定性规则优先**：先用正则/规则做第一层校验，零成本过滤低级错误，减少 LLM 调用
-3. **对抗性评审**：审计 Agent 使用独立上下文，不继承写作 Agent 的假设
-4. **状态持久化**：角色档案、伏笔列表、世界观字典以结构化数据存储（YAML/JSON），每章更新
-5. **Checkpoint**：每章生成后保存状态快照，支持回滚和断点续写
-6. **评分体系**：多维度评分标准，每章验证通过后方可进入下一章
-
----
-
-## 待完成工作
-
-### 基础设施建设
-
-- [x] 确定项目技术栈 → **Python**
-- [x] 设计目录结构 → `src/momashuju/{spec,runtime,verify,llm}/`
-- [x] 选择 LLM 供应商 → **Claude** (anthropic SDK)，预留 DeepSeek/OpenAI 扩展
-- [x] 搭建项目脚手架 → `pyproject.toml` + 可编辑安装
-
-### Spec 层
-
-- [x] 世界观设定模板与数据模型设计 → `spec/models.py` WorldSetting
-- [x] 角色档案模板（姓名/年龄/性格/欲望/恐惧/能力/关系网/知识边界）→ `spec/models.py` Character + Relationship
-- [x] 章节大纲格式规范（路标事件/本章目标/冲突设置/伏笔埋设/钩子）→ `spec/models.py` ChapterOutline
-- [x] 写作风格约束定义（视角/时态/语言风格/禁用词表）→ `spec/models.py` StyleConstraints
-- [x] 伏笔追踪数据结构 → `spec/models.py` Foreshadowing + ForeshadowingTracker
-
-### Runtime 层
-
-- [x] ArchitectAgent：大纲 → 可执行章节规划 → `runtime/agents/architect.py`
-- [x] WriterAgent：逐章写作（含上下文组装逻辑）→ `runtime/agents/writer.py` (structured output)
-- [x] 上下文管理模块：动态压缩 + 状态摘要生成 → `runtime/context.py` ContextManager
-- [x] ReviserAgent：根据审计反馈修订 → `runtime/agents/reviser.py` (零成本跳过)
-- [x] 状态持久化模块：每章 checkpoint 的读写 → `runtime/state.py` StateManager
-- [x] 断点续写机制 → `runtime/state.py` StateManager.restore_context + Pipeline.start_chapter
-- [x] Pipeline 编排器 → `runtime/pipeline.py` (Architect → Writer → Verify → Revise → Persist)
-
-### Verify 层
-
-- [x] ValidatorAgent：确定性规则集实现 → `verify/rules.py` 11条规则全部实现
-  - [x] 格式检查（段落长度 → ParagraphLengthRule）
-  - [x] 禁词/禁用句式检测 → BannedPatternRule + CustomBannedRule
-  - [x] 过渡词密度统计 → TransitionDensityRule
-  - [x] 疲劳词频率控制 → FatigueWordRule
-  - [x] 连续句式检测 → ConsecutiveLeRule + NoEmDashRule + NoMetaNarrationRule + NoReportTermsRule + NoAuthorPreachingRule + NoCollectiveReactionRule
-- [x] AuditorAgent：LLM 质量审计 → `verify/auditor.py` 6维度 structured output
-  - [x] 情节逻辑一致性
-  - [x] 人物行为/对话一致性
-  - [x] 节奏评估（爽点分布）
-  - [x] 伏笔回收检测
-  - [x] 大纲偏离度计算
-  - [x] 可读性评估
-- [x] 评分体系：多维度评分标准定义 → `verify/scoring.py` ScoreCalculator
-- [x] 门禁机制：不通过则阻断进入下一章 → Pipeline 已集成 ScoreCalculator + 修订循环
-
-### 进阶功能
-
-- [ ] 读者模拟：多类型读者人设并行评审
-- [ ] 对抗性独立评审 Agent
-- [ ] 多书并行生成
-- [ ] Web UI / CLI 交互界面
-
----
-
-## 网文创作核心公式（速查）
-
-| 维度 | 公式/原则 |
-|------|-----------|
-| **黄金三章** | 第1章：快速亮相 + 悬念钩子 / 第2章：深化矛盾 + 展露本事 / 第3章：小高潮 + 大钩子 |
-| **读者留存** | 情绪共鸣强度 × 噱头热点系数 × 金手指可信度 |
-| **爽点节奏** | 小爽(每章) → 中爽(每3万字) → 大爽(每10万字) → 超级爽(30万字) |
-| **升级引擎** | 解决旧麻烦 → 引出新麻烦 → 升级/奇遇 → 达成目标 → 引出更大麻烦 |
-| **情绪曲线** | 起(平) → 承(升↑) → 转(跌↓至暗) → 合(平↑结局) |
-| **爽点本质** | 反差：弱→强，卑微→高位，失败→成功，反差越大爽感越强 |
-
----
-
-> 核心理念：**把模糊的创作工作变成可验证、可迭代、可恢复的工程流程。**
-> 不是让 AI 更聪明，而是用 spec + runtime + verify 的闭环，让 AI 的输出变得可预期、可信任。
+在 Multica 工作区中向 PM Agent 发送新的 Issue，描述你想写的小说即可。PM Agent 会自动协调 Writer 和 QA Agent 完成创作。
